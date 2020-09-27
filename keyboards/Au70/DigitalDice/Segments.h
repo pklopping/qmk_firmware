@@ -110,7 +110,7 @@ void Segments__SetAnimationWithAdditive(Segments* self, unsigned char bytes[][4]
     for (int i = 0; i < len; i++) {
       for (int j = 0; j < 4; j++) {
         if (additive)
-          self->animation_frames[Segments__AnimationIndex(i+self->animation_index)][j] = (unsigned char)self->animation_frames[Segments__AnimationIndex(i+self->animation_index)][j] | (unsigned char)bytes[i][j];
+          self->animation_frames[Segments__AnimationIndex(i+self->animation_index)][j] = self->animation_frames[Segments__AnimationIndex(i+self->animation_index)][j] | bytes[i][j];
         else
           self->animation_frames[Segments__AnimationIndex(i+self->animation_index)][j] = bytes[i][j];
       }
@@ -143,14 +143,8 @@ void Segments__StepAnimation(Segments* self) {
 
     // Update all segments
     for (int i = 0; i < 4; i++) {
-      self->segments[i]->Segment__SetValue((unsigned char)self->animation_frames[self->animation_index][i]);
-      // segments[i]->SetValue(255); // for to debug with
+      Segment__SetValueWithByte(self->segments[i], self->animation_frames[self->animation_index][i]);
     }
-
-    // segments[0]->SetValue(animation_index); // for to debug with
-    // segments[1]->SetValue(AnimationIndex(animation_index+1)); // for to debug with
-    // segments[2]->SetValue(AnimationIndex(animation_index+2)); // for to debug with
-    // segments[3]->SetValue(AnimationIndex(animation_index+3)); // for to debug with
 
     // If called before the next frame is due, do nothing
     if (timer_read() < self->last_animation_frame_millis + self->millis_per_frame)
@@ -166,7 +160,7 @@ void Segments__StepAnimation(Segments* self) {
     self->last_animation_frame_millis = timer_read();
 }
 
-bool Segments__IsAnimating(Segments* self, ) {
+bool Segments__IsAnimating(Segments* self) {
   return (self->animation_frames_left > 0);
 }
 
@@ -179,7 +173,7 @@ void Segments__SetValue(Segments* self, int new_value) {
   hundreds  = (new_value/100)  % 10;
   thousands = (new_value/1000) % 10;
 
-  Segment__SetValueWithInt(segments[3], units);
+  Segment__SetValueWithInt(self->segments[3], units);
   
   if (new_value >= 10)
     Segment__SetValueWithInt(self->segments[2], tens);
