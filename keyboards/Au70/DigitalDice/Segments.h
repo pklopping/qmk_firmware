@@ -110,7 +110,7 @@ void Segments__SetAnimationWithAdditive(Segments* self, unsigned char bytes[][4]
     for (int i = 0; i < len; i++) {
       for (int j = 0; j < 4; j++) {
         if (additive)
-          self->animation_frames[Segments__AnimationIndexWithAdditive(i+self->animation_index)][j] = (unsigned char)self->animation_frames[Segments__AnimationIndex(i+self->animation_index)][j] | (byte)bytes[i][j];
+          self->animation_frames[Segments__AnimationIndex(i+self->animation_index)][j] = (unsigned char)self->animation_frames[Segments__AnimationIndex(i+self->animation_index)][j] | (unsigned char)bytes[i][j];
         else
           self->animation_frames[Segments__AnimationIndex(i+self->animation_index)][j] = bytes[i][j];
       }
