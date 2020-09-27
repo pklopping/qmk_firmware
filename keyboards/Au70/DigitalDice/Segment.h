@@ -1,22 +1,18 @@
-#ifndef Segment_h
-#define Segment_h
+#pragma once
 
-class Segment {
-  public:
-    Segment();
-    void SetValue(byte new_value);
-    void SetValue(char new_value);
-    void SetValue(int new_value);
-    byte GetByte();
-    void SetDP(bool decimal_on);
-    bool GetDP();
-    void Clear();
-    static byte GetValueFor(int new_value);
-    static byte GetValueFor(char new_value);
-  private:
-    byte value;
+typedef struct {
+    unsigned char value;
     bool a,b,c,d,e,f,g,dp, decimal_point;
-    void SetValueFromBools();
-};
+} Segment;
 
-#endif
+Segment* Segment__Create(void);
+void Segment__SetValueWithByte(Segment* self, unsigned char new_value);
+void Segment__SetValueWithChar(Segment* self, char new_value);
+void Segment__SetValueWithInt(Segment* self, int new_value);
+unsigned char Segment__GetValue(Segment* self);
+void Segment__SetDP(Segment* self, bool decimal_on);
+void Segment__GetDP(Segment* self);
+void Segment__Clear(Segment* self);
+unsigned char Segment__GetValueForInt(int new_value);
+unsigned char Segment__GetValueForChar(char new_value);
+void Segment__SetValueFromBools(Segment* self);

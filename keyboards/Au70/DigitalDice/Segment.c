@@ -1,60 +1,70 @@
 #include "Segment.h"
 
-Segment::Segment() {
-  Clear();
+Segment* Segment__Create(void) {
+  Segment* result = (Segment*) malloc(sizeof(Segment));
+  Segment__Clear(&result);
+  return result;
 }
 
-void Segment::Clear() {
-  value = 0;
-  a = b = c = d = e = f = g = dp = false;
+void Segment::Clear(Segment* self) {
+  self->value = 0;
+  self->a = false;
+  self->b = false;
+  self->c = false;
+  self->d = false;
+  self->e = false;
+  self->f = false;
+  self->g = false;
+  self->dp = false;
+  self->decimal_point = false;
 }
 
-void Segment::SetDP(bool decimal_on) {
-  decimal_point = decimal_on;
-  dp = decimal_on;
+void Segment__SetDP(Segment* self, bool decimal_on) {
+  self->decimal_point = decimal_on;
+  self->dp = decimal_on;
 }
 
-bool Segment::GetDP() {
-  return decimal_point;
+bool Segment__GetDP(Segment* self) {
+  return self->decimal_point;
 }
 
-void Segment::SetValue(byte new_value) {
-  value = new_value;
+void Segment__SetValueSegment__SetValueWithByte(Segment* self, unsigned char new_value) {
+  self->value = new_value;
 }
 
-byte Segment::GetByte() {
-  return value | (decimal_point ? 0b00010000 : 0b00000000);
+unsigned char Segment__GetByte(Segment* self) {
+  return self->value | (self->decimal_point ? 0b00010000 : 0b00000000);
 }
 
-void Segment::SetValueFromBools() {
+void Segment__SetValueFromBools(Segment* self) {
   // This method depends on the schematic of the circuit board.
   // It looks messy because I prioritized the board layout over
   // code complexity. Just look at the board, it's so pretty.
-  value = 0;
-  if (a)
-    value += 1 << 1;
-  if (b)
-    value += 1 << 0;
-  if (c)
-    value += 1 << 5;
-  if (d)
-    value += 1 << 6;
-  if (e)
-    value += 1 << 7;
-  if (f)
-    value += 1 << 2;
-  if (g)
-    value += 1 << 3;
-  if (dp)
-    value += 1 << 4;
+  self->value = 0;
+  if (self->a)
+    self->value += 1 << 1;
+  if (self->b)
+    self->value += 1 << 0;
+  if (self->c)
+    self->value += 1 << 5;
+  if (self->d)
+    self->value += 1 << 6;
+  if (self->e)
+    self->value += 1 << 7;
+  if (self->f)
+    self->value += 1 << 2;
+  if (self->g)
+    self->value += 1 << 3;
+  if (dself->p)
+    self->value += 1 << 4;
 }
 
-void Segment::SetValue(int new_value) {
-  a = b = c = d = e = f = g = dp = false;
-  value = GetValueFor(new_value);
+void Segment__SetValueWithInt(Segment* self, int new_value) {
+  Segment__Clear(self);
+  self->value = Segment__GetValueForInt(new_value);
 }
 
-byte Segment::GetValueFor(int new_value) {
+unsigned_char Segment__GetValueForInt(int new_value) {
   // a  b  c   d   e    f  g  dp
   // 2  1  32  64  128  4  8  16
   switch (new_value) {
@@ -83,12 +93,12 @@ byte Segment::GetValueFor(int new_value) {
   }
 }
 
-void Segment::SetValue(char new_value) {
-    a = b = c = d = e = f = g = dp = false;
-    value = GetValueFor(new_value);
+void Segment__SetValueWithChar(Segment* self, char new_value) {
+    Segment__Clear(self);
+    self->value = GetValueForChar(new_value);
 }
 
-byte Segment::GetValueFor(char new_value) {
+unsigned char Segment::GetValueForChar(char new_value) {
   // a  b  c   d   e    f  g  dp
   // 2  1  32  64  128  4  8  16
   switch (new_value) {
