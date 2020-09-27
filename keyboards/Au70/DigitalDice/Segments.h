@@ -9,7 +9,7 @@ typedef struct {
     int millis_per_frame;
     int animation_index;
     int animation_frames_left;
-    unsigned char *animation_frames[MAX_FRAMES][4];
+    unsigned char animation_frames[MAX_FRAMES][4];
     int value;
     Segment *segments[4];
 } Segments;
