@@ -48,32 +48,32 @@ Segments* Segments__Create(void) {
 }
 
 unsigned char Segments__GetByte(Segments* self, int i) {
-  return slef->segments[i]->GetByte();
+    return Segment__GetByte(self->segments[i]);
 }
 
 void Segments__SetValueWithByte(Segments* self, int i, unsigned char new_value) {
-  Segment__SetValueWithByte(self->segments[i], new_value);
+    Segment__SetValueWithByte(self->segments[i], new_value);
 }
 
 void Segments__SetValueWithChar(Segments* self, int i, char new_value) {
-  Segment__SetValueWithChar(self->segments[i], new_value);
+    Segment__SetValueWithChar(self->segments[i], new_value);
 }
 
 void Segments__SetValueWithInt(Segments* self, int i, int new_value) {
-  Segment__SetValueWithInt(self->segments[i], new_value);
+    Segment__SetValueWithInt(self->segments[i], new_value);
 }
 
 void Segments__Clear(Segments* self) {
-  Segments__SetvalueWithString(self, "\0");
-  Segments__ClearAnimation(self);
+    Segments__SetValueWithString(self, "\0");
+    Segments__ClearAnimation(self);
 }
 
 void Segments__SetDP(Segments* self, int segment, bool value) {
-  Segment__SetDP(self->segments[segment], value);
+    Segment__SetDP(self->segments[segment], value);
 }
 
 bool Segments__GetDP(Segments* self, int segment) {
-  return self->segments[segment]->GetDP();
+    return Segment__GetDP(self->segments[segment]);
 }
 
 void Segments__ClearAnimation(Segments* self) {
@@ -102,15 +102,15 @@ int Segments__AnimationIndex(int index) {
   return index % MAX_FRAMES;
 }
 
-void Segments__SetAnimationWithAdditive(Segments* self, byte bytes[][4], int len, bool additive) {
-    self->last_animation_frame_millis = millis();
+void Segments__SetAnimationWithAdditive(Segments* self, unsigned char bytes[][4], int len, bool additive) {
+    self->last_animation_frame_millis = timer_read();
 
     self->animation_frames_left = (self->animation_frames_left > len) ? self->animation_frames_left : len ;
 
     for (int i = 0; i < len; i++) {
       for (int j = 0; j < 4; j++) {
-        if (self->additive)
-          self->animation_frames[Segments__AnimationIndex(i+self->animation_index)][j] = (byte)self->animation_frames[Segments__AnimationIndex(i+self->animation_index)][j] | (byte)bytes[i][j];
+        if (additive)
+          self->animation_frames[Segments__AnimationIndexWithAdditive(i+self->animation_index)][j] = (unsigned char)self->animation_frames[Segments__AnimationIndex(i+self->animation_index)][j] | (byte)bytes[i][j];
         else
           self->animation_frames[Segments__AnimationIndex(i+self->animation_index)][j] = bytes[i][j];
       }
@@ -118,7 +118,7 @@ void Segments__SetAnimationWithAdditive(Segments* self, byte bytes[][4], int len
 }
 
 void Segments__SetAnimation(Segments* self, char chars[][4], int len) {
-    self->last_animation_frame_millis = millis();
+    self->last_animation_frame_millis = timer_read();
 
     self->animation_frames_left = len;
 
@@ -126,11 +126,11 @@ void Segments__SetAnimation(Segments* self, char chars[][4], int len) {
     for (int i = 0; i < len; i++) {
       clear_rest = false;
       for (int j = 0; j < 4; j++) {
-        if (clear_rest || chars[j] == '\0') {
+        if (clear_rest || chars[i][j] == '\0') {
           clear_rest = true;
           self->animation_frames[Segments__AnimationIndex(i+self->animation_index)][j] = 0;
         } else {
-          self->animation_frames[Segments__AnimationIndex(i+self->animation_index)][j] = Segment__GetValueFor(chars[i][j]);
+          self->animation_frames[Segments__AnimationIndex(i+self->animation_index)][j] = Segment__GetValueForChar(chars[i][j]);
         }
       }
     }
@@ -143,7 +143,7 @@ void Segments__StepAnimation(Segments* self) {
 
     // Update all segments
     for (int i = 0; i < 4; i++) {
-      self->segments[i]->Segment__SetValue((byte)self->animation_frames[self->animation_index][i]);
+      self->segments[i]->Segment__SetValue((unsigned char)self->animation_frames[self->animation_index][i]);
       // segments[i]->SetValue(255); // for to debug with
     }
 
@@ -153,7 +153,7 @@ void Segments__StepAnimation(Segments* self) {
     // segments[3]->SetValue(AnimationIndex(animation_index+3)); // for to debug with
 
     // If called before the next frame is due, do nothing
-    if (millis() < self->last_animation_frame_millis + self->millis_per_frame)
+    if (timer_read() < self->last_animation_frame_millis + self->millis_per_frame)
       return;
 
     // Clear the memory so it's not goofy for the next loop
@@ -163,7 +163,7 @@ void Segments__StepAnimation(Segments* self) {
     // Move to next frame and record the last frame time
     self->animation_index = Segments__AnimationIndex(self->animation_index + 1);
     self->animation_frames_left--;
-    self->last_animation_frame_millis = millis();
+    self->last_animation_frame_millis = timer_read();
 }
 
 bool Segments__IsAnimating(Segments* self, ) {
@@ -179,20 +179,20 @@ void Segments__SetValue(Segments* self, int new_value) {
   hundreds  = (new_value/100)  % 10;
   thousands = (new_value/1000) % 10;
 
-  self->segments[3]->Segment__SetValue(units);
+  Segment__SetValueWithInt(segments[3], units);
   
   if (new_value >= 10)
-    self->segments[2]->Segment__SetValue(tens);
+    Segment__SetValueWithInt(self->segments[2], tens);
   else
-    self->segments[2]->Segment__Clear();
+    Segment__Clear(self->segments[2]);
     
   if (new_value >= 100)
-    self->segments[1]->Segment__SetValue(hundreds);
+    Segment__SetValueWithInt(self->segments[1], hundreds);
   else
-    self->segments[1]->Segment__Clear();
+    Segment__Clear(self->segments[1]);
 
   if (new_value >= 1000)
-    self->segments[0]->Segment__SetValue(thousands);
+    Segment__SetValueWithInt(self->segments[0], thousands);
   else
-    self->segments[0]->Segment__Clear();
+    Segment__Clear(self->segments[0]);
 }

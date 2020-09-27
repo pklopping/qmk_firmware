@@ -11,7 +11,7 @@ void Segment__SetValueWithChar(Segment* self, char new_value);
 void Segment__SetValueWithInt(Segment* self, int new_value);
 unsigned char Segment__GetValue(Segment* self);
 void Segment__SetDP(Segment* self, bool decimal_on);
-void Segment__GetDP(Segment* self);
+bool Segment__GetDP(Segment* self);
 void Segment__Clear(Segment* self);
 unsigned char Segment__GetValueForInt(int new_value);
 unsigned char Segment__GetValueForChar(char new_value);
@@ -21,7 +21,7 @@ void Segment__SetValueFromBools(Segment* self);
 
 Segment* Segment__Create(void) {
   Segment* result = (Segment*) malloc(sizeof(Segment));
-  Segment__Clear(&result);
+  Segment__Clear(result);
   return result;
 }
 
@@ -74,7 +74,7 @@ void Segment__SetValueFromBools(Segment* self) {
     self->value += 1 << 2;
   if (self->g)
     self->value += 1 << 3;
-  if (dself->p)
+  if (self->dp)
     self->value += 1 << 4;
 }
 
@@ -83,7 +83,7 @@ void Segment__SetValueWithInt(Segment* self, int new_value) {
   self->value = Segment__GetValueForInt(new_value);
 }
 
-unsigned_char Segment__GetValueForInt(int new_value) {
+unsigned char Segment__GetValueForInt(int new_value) {
   // a  b  c   d   e    f  g  dp
   // 2  1  32  64  128  4  8  16
   switch (new_value) {
@@ -114,7 +114,7 @@ unsigned_char Segment__GetValueForInt(int new_value) {
 
 void Segment__SetValueWithChar(Segment* self, char new_value) {
     Segment__Clear(self);
-    self->value = GetValueForChar(new_value);
+    self->value = Segment__GetValueForChar(new_value);
 }
 
 unsigned char Segment__GetValueForChar(char new_value) {
