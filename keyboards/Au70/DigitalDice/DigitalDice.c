@@ -7,11 +7,11 @@
 
 #define SEVEN_RCK C7
 #define SEVEN_CLR D7
-char a = 1;
+int a = 1;
 Segments* segments;
 
 void spam(void) {
-	spi_start(B4, true, 0, 2);
+	spi_start(B4, false, 0, 2);
 	Segments__SetValue(segments, a);
 	for (int i = 0; i < 4; i++) {
 		spi_write(Segments__GetByte(segments, i));
