@@ -1,7 +1,6 @@
 #pragma once
 
 #include "quantum.h"
-#include "Segments.h"
 #define ___ KC_NO
 
 // This a shortcut to help you visually see your layout.

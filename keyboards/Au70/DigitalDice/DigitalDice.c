@@ -2,19 +2,20 @@
 #include <time.h>
 #include <unistd.h>
 #include "DigitalDice.h"
+#include "Segments.h"
 #include "spi_master.h"
 
 #define SEVEN_RCK C7
 #define SEVEN_CLR D7
 char a = 1;
+Segments* segments;
 
-void spam(void);
-void spam() {
+void spam(void) {
 	spi_start(B4, true, 0, 2);
-	spi_write(a);
-	spi_write(a);
-	spi_write(a);
-	spi_write(a);
+	Segments__SetValue(segments, a);
+	for (int i = 0; i < 4; i++) {
+		spi_write(Segments__GetByte(segments, i));
+	}
 	a++;
 	spi_stop();
 	writePinHigh(SEVEN_RCK);
@@ -23,6 +24,7 @@ void spam() {
 }
 
 void matrix_init_kb(void) {
+	segments = Segments__Create();
 	// put your keyboard start-up code here
 	// runs once when the firmware starts up
 	setPinOutput(SEVEN_RCK);
