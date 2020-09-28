@@ -7,12 +7,11 @@
 
 #define SEVEN_RCK C7
 #define SEVEN_CLR D7
-int a = 1;
+int a = 0;
 Segments* segments;
 
-void spam(void) {
+void UpdateDisplay(void) {
 	spi_start(B4, false, 0, 2);
-	Segments__SetValue(segments, a);
 	for (int i = 0; i < 4; i++) {
 		spi_write(Segments__GetByte(segments, i));
 	}
@@ -34,7 +33,9 @@ void matrix_init_kb(void) {
 	matrix_init_user();
     spi_init();
 
-    spam();
+
+	Segments__SetValue(segments, a);
+    UpdateDisplay();
 }
 
 void matrix_scan_kb(void) {
@@ -47,8 +48,13 @@ void matrix_scan_kb(void) {
 bool process_record_kb(uint16_t keycode, keyrecord_t *record) {
 	// put your per-action keyboard code here
 	// runs for every action, just before processing by the firmware
-	if (record->event.pressed)
-		spam();
+	if (record->event.pressed) {
+		if (keycode == KC_KP_1)
+			Segments__SetValueWithString(segments, "Zero");
+		else
+			Segments__SetValue(segments, a);
+		UpdateDisplay();
+	}
 
 	return process_record_user(keycode, record);
 }
