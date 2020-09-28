@@ -37,7 +37,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
  */
 
   [1] = LAYOUT(
-  LT(2,DD_CLEAR), DD_D4, DD_D6, DD_D8, DD_D20,
+  LT(2,DD_CLEAR), DD_D4, DD_D6, DD_D8, LT(3,DD_D20),
   _______, DD_D10, DD_D12, DD_D100, _______
   ),
 
