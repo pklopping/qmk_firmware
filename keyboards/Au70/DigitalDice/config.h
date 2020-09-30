@@ -34,8 +34,6 @@
 #define DIODE_DIRECTION COL2ROW
 
 #define BACKLIGHT_PIN C6
-#define BACKLIGHT_BREATHING
-#define BACKLIGHT_LEVELS 10
 
 /* Debounce reduces chatter (unintended double-presses) - set 0 if debouncing is not needed */
 #define DEBOUNCE 5
@@ -49,9 +47,6 @@
 /* #define LOCKING_SUPPORT_ENABLE */
 /* Locking resynchronize hack */
 /* #define LOCKING_RESYNC_ENABLE */
-
-#define B5_AUDIO
-#define AUDIO_CLICKY
 
 /* If defined, GRAVE_ESC will always act as ESC when CTRL is held.
  * This is userful for the Windows task manager shortcut (ctrl+shift+esc).
