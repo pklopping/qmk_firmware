@@ -11,20 +11,21 @@
 
 #define SEVEN_RCK C7
 #define SEVEN_CLR D7
+
 Segments* segments;
 
 uint16_t last_frame = 0;
 
 enum custom_keycodes {
-  DD_CLEAR = SAFE_RANGE,
-  DD_D4,
-  DD_D6,
-  DD_D8,
-  DD_D10,
-  DD_D12,
-  DD_D20,
-  DD_D100,
-  DD_ACC
+    DD_CLEAR = SAFE_RANGE,
+    DD_D4,
+    DD_D6,
+    DD_D8,
+    DD_D10,
+    DD_D12,
+    DD_D20,
+    DD_D100,
+    DD_ACC
 };
 
 // Used with hacky layer switching
@@ -36,9 +37,9 @@ uint16_t total_rolled = 0;
 
 #define NUM_LAYERS 3
 char LAYER_NAMES[NUM_LAYERS][4] = {
-  "TYPE",
-  "ROLL",
-  "SETT"
+    "TYPE",
+    "ROLL",
+    "SETT"
 };
 
 const uint16_t PROGMEM keymaps[NUM_LAYERS][MATRIX_ROWS][MATRIX_COLS] = {
@@ -69,7 +70,7 @@ const uint16_t PROGMEM keymaps[NUM_LAYERS][MATRIX_ROWS][MATRIX_COLS] = {
         _______, DD_D10, DD_D12, DD_D100, _______
     ),
 
-/* Keyboard Adjust
+/* Adjust
  * .--------------------------------------------.
  * |        | ClkOn  |        | Bcklt+ |        |
  * | Accum  +--------+--------+--------+        |
@@ -132,35 +133,35 @@ void UpdateDisplay(void) {
 }
 
 void Roll(uint16_t keycode) {
-  Segments__SetAnimationWithAdditive(segments, rolling_animation, 32, true);
-  uint16_t rolled = 0;
-  switch (keycode) {
-      case DD_D4:
-      rolled = (rand() % 4 ) + 1;
-      break;
-      case DD_D6:
-      rolled = (rand() % 6) + 1;
-      break;
-      case DD_D8:
-      rolled = (rand() % 8) + 1;
-      break;
-      case DD_D10:
-      rolled = (rand() % 10) + 1;
-      break;
-      case DD_D12:
-      rolled = (rand() % 12) + 1;
-      break;
-      case DD_D20:
-      rolled = (rand() % 20) + 1;
-      break;
-      case DD_D100:
-      rolled = (rand() % 100) + 1;
-      break;
-  }
-  if (accumulate)
-    total_rolled += rolled;
-else
-    total_rolled = rolled;
+    Segments__SetAnimationWithAdditive(segments, rolling_animation, 32, true);
+    uint16_t rolled = 0;
+    switch (keycode) {
+    case DD_D4:
+        rolled = (rand() % 4 ) + 1;
+        break;
+    case DD_D6:
+        rolled = (rand() % 6) + 1;
+        break;
+    case DD_D8:
+        rolled = (rand() % 8) + 1;
+        break;
+    case DD_D10:
+        rolled = (rand() % 10) + 1;
+        break;
+    case DD_D12:
+        rolled = (rand() % 12) + 1;
+        break;
+    case DD_D20:
+        rolled = (rand() % 20) + 1;
+        break;
+    case DD_D100:
+        rolled = (rand() % 100) + 1;
+        break;
+    }
+    if (accumulate)
+        total_rolled += rolled;
+    else
+        total_rolled = rolled;
 
 }
 
@@ -226,35 +227,27 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
             case DD_CLEAR:
                 Segments__ClearAnimation(segments);
                 total_rolled = 0;
-                // Segments__SetValueWithString(segments, "CLER");
                 break;
             case DD_D4:
                 Roll(keycode);
-                // Segments__SetValueWithString(segments, "  D4");
                 break;
             case DD_D6:
                 Roll(keycode);
-                // Segments__SetValueWithString(segments, "  D6");
                 break;
             case DD_D8:
                 Roll(keycode);
-                // Segments__SetValueWithString(segments, "  D8");
                 break;
             case DD_D10:
                 Roll(keycode);
-                // Segments__SetValueWithString(segments, " D10");
                 break;
             case DD_D12:
                 Roll(keycode);
-                // Segments__SetValueWithString(segments, " D12");
                 break;
             case DD_D20:
                 Roll(keycode);
-                // Segments__SetValueWithString(segments, " D20");
                 break;
             case DD_D100:
                 Roll(keycode);
-                // Segments__SetValueWithString(segments, "D100");
                 break;
             case CK_ON:
                 Segments__SetValueWithString(segments, "BEEP");
