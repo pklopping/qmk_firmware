@@ -33,6 +33,7 @@ bool L_Held = false;
 bool R_Held = false;
 uint8_t layer = 0;
 bool accumulate = false;
+bool last_is_animating = false;
 uint16_t total_rolled = 0;
 
 #define NUM_LAYERS 3
@@ -182,11 +183,20 @@ void matrix_init_user(void) {
 
 void matrix_scan_user(void) {
     // Animate the display if there are things to animate
-    if (Segments__IsAnimating(segments) && timer_read() > last_frame + 25) {
+    bool curr_is_animating = Segments__IsAnimating(segments);
+    if (curr_is_animating && timer_read() > last_frame + 25) {
         Segments__StepAnimation(segments);
         last_frame = timer_read();
+        UpdateDisplay();
     }
-    UpdateDisplay();
+    // If the animation just stopped, show the roll (need to generalize this to work with more than rolls)
+    if (last_is_animating && curr_is_animating == false) {
+        Segments__SetValue(segments, total_rolled);
+        UpdateDisplay();
+    }
+
+    // Remember the current state
+    last_is_animating = curr_is_animating;
 }
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
