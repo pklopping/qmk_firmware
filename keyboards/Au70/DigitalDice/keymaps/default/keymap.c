@@ -72,14 +72,14 @@ const uint16_t PROGMEM keymaps[NUM_LAYERS][MATRIX_ROWS][MATRIX_COLS] = {
 
 /* Adjust
  * .--------------------------------------------.
- * |        | ClkOn  |        | Bcklt+ |        |
- * | Accum  +--------+--------+--------+        |
+ * |        | ClkOn  | Accum  | Bcklt+ |        |
+ * |        +--------+--------+--------+        |
  * |        | ClkOff |        | Bcklt- |        |
  * '--------------------------------------------'
  */
 
     [2] = LAYOUT(
-        DD_ACC, CK_ON, KC_NO, BL_INC, KC_NO,
+        _______, CK_ON, DD_ACC, BL_INC, KC_NO,
         _______, CK_OFF, KC_NO, BL_DEC, _______
     ),
 
