@@ -1,15 +1,19 @@
 #include <stdio.h>
+#include <stdlib.h> 
 #include <time.h>
 #include <unistd.h>
 #include "DigitalDice.h"
 #include "Segments.h"
 #include "spi_master.h"
+#include "Animation.h"
 
 #include QMK_KEYBOARD_H
 
 #define SEVEN_RCK C7
 #define SEVEN_CLR D7
 Segments* segments;
+
+uint16_t last_frame = 0;
 
 enum custom_keycodes {
   DD_CLEAR = SAFE_RANGE,
@@ -27,10 +31,12 @@ enum custom_keycodes {
 bool L_Held = false;
 bool R_Held = false;
 uint8_t layer = 0;
+bool accumulate = false;
+uint16_t total_rolled = 0;
 
 #define NUM_LAYERS 3
 char LAYER_NAMES[NUM_LAYERS][4] = {
-  "HOME",
+  "TYPE",
   "ROLL",
   "SETT"
 };
@@ -65,15 +71,15 @@ const uint16_t PROGMEM keymaps[NUM_LAYERS][MATRIX_ROWS][MATRIX_COLS] = {
 
 /* Keyboard Adjust
  * .--------------------------------------------.
- * |        | ClkOn  |  Macro | Bcklt+ |        |
+ * |        | ClkOn  |        | Bcklt+ |        |
  * | Accum  +--------+--------+--------+        |
- * |        | ClkOff |  Dice  | Bcklt- |        |
+ * |        | ClkOff |        | Bcklt- |        |
  * '--------------------------------------------'
  */
 
     [2] = LAYOUT(
-    DD_ACC, CK_ON, _______, BL_INC, BL_STEP,
-    _______, CK_OFF, _______, BL_DEC, _______
+    DD_ACC, CK_ON, KC_NO, BL_INC, KC_NO,
+    _______, CK_OFF, KC_NO, BL_DEC, _______
     ),
 
 };
@@ -98,20 +104,21 @@ bool HandleLayerSwitch( keyrecord_t *record) {
         layer --;
       }
       // lazy min/max
-      layer = layer > NUM_LAYERS ? NUM_LAYERS : layer;
-      layer = layer < 0 ? 0 : layer;
+      if (layer >= NUM_LAYERS) layer = 0;
 
       Segments__SetValueWithString(segments, LAYER_NAMES[layer]);
       layer_move(layer);
-      return true;
+      return false;
     }
+    if (R_Held && L_Held)
+      return false; // Don't count the second press as a key
   } else {
     if (row == 0 && col == 0)
       L_Held = false;
     else if (row == 0 && col == 4)
       R_Held = false;
   }
-  return false;
+  return true;
 }
 
 void UpdateDisplay(void) {
@@ -122,10 +129,43 @@ void UpdateDisplay(void) {
   spi_stop();
   writePinHigh(SEVEN_RCK);
   writePinLow(SEVEN_RCK);
-  backlight_level(8);
+}
+
+void Roll(uint16_t keycode) {
+  Segments__SetAnimationWithAdditive(segments, rolling_animation, 32, true);
+  uint16_t rolled = 0;
+  switch (keycode) {
+      case DD_D4:
+        rolled = (rand() % 4 ) + 1;
+        break;
+      case DD_D6:
+        rolled = (rand() % 6) + 1;
+        break;
+      case DD_D8:
+        rolled = (rand() % 8) + 1;
+        break;
+      case DD_D10:
+        rolled = (rand() % 10) + 1;
+        break;
+      case DD_D12:
+        rolled = (rand() % 12) + 1;
+        break;
+      case DD_D20:
+        rolled = (rand() % 20) + 1;
+        break;
+      case DD_D100:
+        rolled = (rand() % 100) + 1;
+        break;
+  }
+    if (accumulate)
+        total_rolled += rolled;
+    else
+        total_rolled = rolled;
+    
 }
 
 void matrix_init_user(void) {
+    srand(time(0));
     segments = Segments__Create();
     // put your keyboard start-up code here
     // runs once when the firmware starts up
@@ -139,13 +179,22 @@ void matrix_init_user(void) {
     UpdateDisplay();
 }
 
+void matrix_scan_user(void) {
+  // Animate the display if there are things to animate
+  if (Segments__IsAnimating(segments) && timer_read() > last_frame + 25) {
+    Segments__StepAnimation(segments);
+    last_frame = timer_read();
+    UpdateDisplay();
+  }
+}
+
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
   // put your per-action keyboard code here
   // runs for every action, just before processing by the firmware
-  bool handled = HandleLayerSwitch(record);
-  if (handled) {
+  bool should_continue = HandleLayerSwitch(record);
+  if (should_continue == false) {
     UpdateDisplay();
-    return true;
+    return false;
   }
 
   if (record->event.pressed) {
@@ -175,31 +224,50 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
         Segments__SetValue(segments, 8);
         break;
       case DD_CLEAR:
-        Segments__SetValueWithString(segments, "CLER");
+        Segments__ClearAnimation(segments);
+        total_rolled = 0;
+        // Segments__SetValueWithString(segments, "CLER");
         break;
       case DD_D4:
-        Segments__SetValueWithString(segments, "  D4");
+        Roll(keycode);
+        // Segments__SetValueWithString(segments, "  D4");
         break;
       case DD_D6:
-        Segments__SetValueWithString(segments, "  D6");
+        Roll(keycode);
+        // Segments__SetValueWithString(segments, "  D6");
         break;
       case DD_D8:
-        Segments__SetValueWithString(segments, "  D8");
+        Roll(keycode);
+        // Segments__SetValueWithString(segments, "  D8");
         break;
       case DD_D10:
-        Segments__SetValueWithString(segments, " D10");
+        Roll(keycode);
+        // Segments__SetValueWithString(segments, " D10");
         break;
       case DD_D12:
-        Segments__SetValueWithString(segments, " D12");
+        Roll(keycode);
+        // Segments__SetValueWithString(segments, " D12");
         break;
       case DD_D20:
-        Segments__SetValueWithString(segments, " D20");
+        Roll(keycode);
+        // Segments__SetValueWithString(segments, " D20");
         break;
       case DD_D100:
-        Segments__SetValueWithString(segments, "D100");
+        Roll(keycode);
+        // Segments__SetValueWithString(segments, "D100");
+        break;
+    case CK_ON:
+        Segments__SetValueWithString(segments, "BEEP");
+        break;
+    case CK_OFF:
+        Segments__SetValueWithString(segments, "MUTE");
         break;
     case DD_ACC:
-        Segments__SetValueWithString(segments, "ACC ");
+        accumulate = !accumulate;
+        if (accumulate)
+            Segments__SetValueWithString(segments, "ACON");
+        else
+            Segments__SetValueWithString(segments, "ACOF");
         break;
       default:
         Segments__SetValue(segments, keycode);

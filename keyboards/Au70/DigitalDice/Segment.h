@@ -47,7 +47,7 @@ bool Segment__GetDP(Segment* self) {
   return self->decimal_point;
 }
 
-void Segment__SetValueSegment__SetValueWithByte(Segment* self, unsigned char new_value) {
+void Segment__SetValueWithByte(Segment* self, unsigned char new_value) {
   self->value = new_value;
 }
 
