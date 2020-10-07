@@ -64,8 +64,8 @@ void Segments__SetValueWithInt(Segments* self, int i, int new_value) {
 }
 
 void Segments__Clear(Segments* self) {
-    Segments__SetValueWithString(self, "\0");
     Segments__ClearAnimation(self);
+    Segments__SetValueWithString(self, "    ");
 }
 
 void Segments__SetDP(Segments* self, int segment, bool value) {

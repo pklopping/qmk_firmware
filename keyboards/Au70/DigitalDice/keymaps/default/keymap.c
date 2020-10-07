@@ -104,6 +104,8 @@ void led_set_user(uint8_t usb_led) {
 
 }
 
+bool Roll(uint16_t keycode);
+
 // HandleLayerSwitch
 // Return true if the keypress was handled
 bool HandleLayerSwitch(uint16_t keycode, keyrecord_t *record) {
@@ -147,20 +149,24 @@ bool HandleLayerSwitch(uint16_t keycode, keyrecord_t *record) {
             return true;
         }
     }
-    else
+    else // record->event.pressed == false
     {
         if (row == 0 && col == 0) {
             L_Pressed = false;
             // Treat it like a regular keypress if it wasn't held long enough
             if (L_Pressed_Time + HOLD_TIME > now) {
-                tap_code(L_Keycode);
+                bool is_dice = Roll(keycode);
+                if (is_dice == false)
+                    tap_code(L_Keycode);
                 return false;
             }
         }
         else if (row == 0 && col == 4) {
             R_Pressed = false;
             if (R_Pressed_Time + HOLD_TIME > now) {
-                tap_code(R_Keycode);
+                bool is_dice = Roll(keycode);
+                if (is_dice == false)
+                    tap_code(R_Keycode);
                 return false;
             }
         }
@@ -178,37 +184,60 @@ void UpdateDisplay(void) {
     writePinLow(SEVEN_RCK);
 }
 
-void Roll(uint16_t keycode) {
-    Segments__SetAnimationWithAdditive(segments, rolling_animation, 32, true);
+bool Roll(uint16_t keycode) {
     uint16_t rolled = 0;
+    bool identified = true;
+    bool was_roll = true;
     switch (keycode) {
-    case DD_D4:
-        rolled = (rand() % 4 ) + 1;
-        break;
-    case DD_D6:
-        rolled = (rand() % 6) + 1;
-        break;
-    case DD_D8:
-        rolled = (rand() % 8) + 1;
-        break;
-    case DD_D10:
-        rolled = (rand() % 10) + 1;
-        break;
-    case DD_D12:
-        rolled = (rand() % 12) + 1;
-        break;
-    case DD_D20:
-        rolled = (rand() % 20) + 1;
-        break;
-    case DD_D100:
-        rolled = (rand() % 100) + 1;
-        break;
+        case DD_D4:
+            rolled = (rand() % 4 ) + 1;
+            break;
+        case DD_D6:
+            rolled = (rand() % 6) + 1;
+            break;
+        case DD_D8:
+            rolled = (rand() % 8) + 1;
+            break;
+        case DD_D10:
+            rolled = (rand() % 10) + 1;
+            break;
+        case DD_D12:
+            rolled = (rand() % 12) + 1;
+            break;
+        case DD_D20:
+            rolled = (rand() % 20) + 1;
+            break;
+        case DD_D100:
+            rolled = (rand() % 100) + 1;
+            break;
+        case DD_CLEAR:
+            was_roll = false;
+            Segments__Clear(segments);
+            total_rolled = 0;
+            break;
+        case DD_ACC:
+            accumulate = !accumulate;
+            if (accumulate)
+                Segments__SetValueWithString(segments, "ACON");
+            else
+                Segments__SetValueWithString(segments, "ACOF");
+        default:
+            identified = false;
+            was_roll = false;
+
     }
     if (accumulate)
         total_rolled += rolled;
     else
         total_rolled = rolled;
 
+    if (identified) {
+        if (was_roll) {
+            Segments__SetAnimationWithAdditive(segments, rolling_animation, 32, true);
+        }
+        UpdateDisplay();
+    }
+    return identified;
 }
 
 void matrix_init_user(void) {
@@ -252,7 +281,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
         UpdateDisplay();
         return false;
     }
-
+    bool display_needs_update = true;
     if (record->event.pressed) {
         switch (keycode) {
             case KC_KP_1:
@@ -280,29 +309,16 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
                 Segments__SetValue(segments, 8);
                 break;
             case DD_CLEAR:
-                Segments__ClearAnimation(segments);
-                total_rolled = 0;
-                break;
             case DD_D4:
-                Roll(keycode);
-                break;
             case DD_D6:
-                Roll(keycode);
-                break;
             case DD_D8:
-                Roll(keycode);
-                break;
             case DD_D10:
-                Roll(keycode);
-                break;
             case DD_D12:
-                Roll(keycode);
-                break;
             case DD_D20:
-                Roll(keycode);
-                break;
             case DD_D100:
+            case DD_ACC:
                 Roll(keycode);
+                display_needs_update = false;
                 break;
             case CK_ON:
                 Segments__SetValueWithString(segments, "BEEP");
@@ -310,18 +326,12 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
             case CK_OFF:
                 Segments__SetValueWithString(segments, "MUTE");
                 break;
-            case DD_ACC:
-                accumulate = !accumulate;
-                if (accumulate)
-                    Segments__SetValueWithString(segments, "ACON");
-                else
-                    Segments__SetValueWithString(segments, "ACOF");
-                break;
             default:
                 Segments__SetValue(segments, keycode);
                 break;
         }
-        UpdateDisplay();
+        if (display_needs_update)
+            UpdateDisplay();
     }
     return true;
 }
