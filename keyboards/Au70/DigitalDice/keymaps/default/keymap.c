@@ -28,10 +28,24 @@ enum custom_keycodes {
     DD_ACC
 };
 
+typedef struct {
+    uint16_t keycode;
+    keyrecord_t *record;
+    uint16_t pressed_time;
+    bool is_pressed;
+} FakeLayerTapKey;
+
 // Used with hacky layer switching
-bool L_Held = false;
-bool R_Held = false;
+uint16_t L_Pressed_Time = false;
+bool L_Pressed = false;
+uint16_t L_Keycode = 0;
+uint16_t R_Pressed_Time = false;
+bool R_Pressed = false;
+uint16_t R_Keycode = 0;
+const uint16_t HOLD_TIME = 250;
 uint8_t layer = 0;
+
+// Digital dice bookkeeping
 bool accumulate = false;
 bool last_is_animating = false;
 uint16_t total_rolled = 0;
@@ -90,37 +104,68 @@ void led_set_user(uint8_t usb_led) {
 
 }
 
-bool HandleLayerSwitch( keyrecord_t *record) {
+// HandleLayerSwitch
+// Return true if the keypress was handled
+bool HandleLayerSwitch(uint16_t keycode, keyrecord_t *record) {
     uint8_t row = record->event.key.row;
     uint8_t col = record->event.key.col;
-
-    if (record->event.pressed) {
+    uint16_t now = timer_read(); // caching because I assume this is expensive
+    if (record->event.pressed)
+    {
         if (row == 0 && col == 0)
-            L_Held = true;
-        else if (row == 0 && col == 4)
-            R_Held = true;
-    else if (L_Held && R_Held && col == 2) {
-        if (row == 0) {
-            layer ++;
-        } else {
-            layer --;
+        {
+            L_Pressed = true;
+            L_Pressed_Time = now;
+            L_Keycode = keycode;
+            return true;
         }
-          // lazy min/max
-        if (layer >= NUM_LAYERS) layer = 0;
-
-        Segments__SetValueWithString(segments, LAYER_NAMES[layer]);
-        layer_move(layer);
-        return false;
-    }
-    if (R_Held && L_Held)
-          return false; // Don't count the second press as a key
-    } else {
-        if (row == 0 && col == 0)
-            L_Held = false;
         else if (row == 0 && col == 4)
-            R_Held = false;
+        {
+            R_Pressed = true;
+            R_Pressed_Time = now;
+            R_Keycode = keycode;
+            return true;
+        }
+        else if (L_Pressed && R_Pressed && col == 2)
+        {
+            if (row == 0)
+            {
+                layer ++;
+            }
+            else
+            {
+                layer --;
+            }
+
+            // lazy min/max
+            if (layer >= NUM_LAYERS) {
+                layer = 0;
+            }
+
+            Segments__SetValueWithString(segments, LAYER_NAMES[layer]);
+            layer_move(layer);
+            return true;
+        }
     }
-    return true;
+    else
+    {
+        if (row == 0 && col == 0) {
+            L_Pressed = false;
+            // Treat it like a regular keypress if it wasn't held long enough
+            if (L_Pressed_Time + HOLD_TIME > now) {
+                tap_code(L_Keycode);
+                return false;
+            }
+        }
+        else if (row == 0 && col == 4) {
+            R_Pressed = false;
+            if (R_Pressed_Time + HOLD_TIME > now) {
+                tap_code(R_Keycode);
+                return false;
+            }
+        }
+    }
+    return false;
 }
 
 void UpdateDisplay(void) {
@@ -202,8 +247,8 @@ void matrix_scan_user(void) {
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
   // put your per-action keyboard code here
   // runs for every action, just before processing by the firmware
-    bool should_continue = HandleLayerSwitch(record);
-    if (should_continue == false) {
+    bool press_handled = HandleLayerSwitch(keycode, record);
+    if (press_handled == true) {
         UpdateDisplay();
         return false;
     }
