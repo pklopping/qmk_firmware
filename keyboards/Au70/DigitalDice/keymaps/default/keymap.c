@@ -258,7 +258,7 @@ void matrix_init_user(void) {
 void matrix_scan_user(void) {
     // Animate the display if there are things to animate
     bool curr_is_animating = Segments__IsAnimating(segments);
-    if (curr_is_animating && timer_read() > last_frame + 25) {
+    if (curr_is_animating && timer_read() > last_frame + 15) {
         Segments__StepAnimation(segments);
         last_frame = timer_read();
         UpdateDisplay();
