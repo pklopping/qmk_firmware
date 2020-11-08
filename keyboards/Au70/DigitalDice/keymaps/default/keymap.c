@@ -42,6 +42,7 @@ uint16_t L_Keycode = 0;
 uint16_t R_Pressed_Time = false;
 bool R_Pressed = false;
 uint16_t R_Keycode = 0;
+bool L_and_R_were_pressed = false;
 const uint16_t HOLD_TIME = 250;
 uint8_t layer = 0;
 
@@ -52,25 +53,12 @@ uint16_t total_rolled = 0;
 
 #define NUM_LAYERS 3
 char LAYER_NAMES[NUM_LAYERS][4] = {
-    "TYPE",
     "ROLL",
+    "TYPE",
     "SETT"
 };
 
 const uint16_t PROGMEM keymaps[NUM_LAYERS][MATRIX_ROWS][MATRIX_COLS] = {
-
-/* Macro Pad
- * .--------------------------------------------.
- * |        |   2    |   3    |   4    |        |
- * |   1    +--------+--------+--------+   5    |
- * |        |   6    |   7    |   8    |        |
- * '--------------------------------------------'
- */
-
-    [0] = LAYOUT(
-        KC_KP_1, KC_KP_2, KC_KP_3, KC_KP_4, KC_KP_5,
-        _______, KC_KP_6, KC_KP_7, KC_KP_8, _______
-    ),
 
 /* Digital Dice
  * .--------------------------------------------.
@@ -80,9 +68,22 @@ const uint16_t PROGMEM keymaps[NUM_LAYERS][MATRIX_ROWS][MATRIX_COLS] = {
  * '--------------------------------------------'
  */
 
-    [1] = LAYOUT(
+    [0] = LAYOUT(
         DD_CLEAR, DD_D4, DD_D6, DD_D8, DD_D20,
         _______, DD_D10, DD_D12, DD_D100, _______
+    ),
+
+/* Macro Pad
+ * .--------------------------------------------.
+ * |        |   2    |   3    |   4    |        |
+ * |   1    +--------+--------+--------+   5    |
+ * |        |   6    |   7    |   8    |        |
+ * '--------------------------------------------'
+ */
+
+    [1] = LAYOUT(
+        KC_KP_1, KC_KP_2, KC_KP_3, KC_KP_4, KC_KP_5,
+        _______, KC_KP_6, KC_KP_7, KC_KP_8, _______
     ),
 
 /* Adjust
@@ -124,25 +125,31 @@ bool HandleLayerSwitch(uint16_t keycode, keyrecord_t *record) {
             R_Keycode = keycode;
             return true;
         }
-        else if (L_Pressed && R_Pressed && col == 2)
+        else if (L_Pressed && R_Pressed)
         {
-            if (row == 0)
+            L_and_R_were_pressed = true;
+            if (col == 2) // Use the middle column to jump layers
             {
-                layer ++;
-            }
-            else
-            {
-                layer --;
-            }
+                if (row == 0)
+                {
+                    layer ++;
+                }
+                else
+                {
+                    layer --;
+                }
 
-            // lazy min/max
-            if (layer >= NUM_LAYERS) {
-                layer = 0;
-            }
+                // lazy min/max
+                if (layer == 255) // Did it overflow?
+                    layer = NUM_LAYERS - 1;
+                if (layer >= NUM_LAYERS) {
+                    layer = 0;
+                }
 
-            Segments__SetValueWithString(segments, LAYER_NAMES[layer]);
-            layer_move(layer);
-            return true;
+                Segments__SetValueWithString(segments, LAYER_NAMES[layer]);
+                layer_move(layer);
+                return true;
+            }
         }
     }
     else // record->event.pressed == false
@@ -150,19 +157,23 @@ bool HandleLayerSwitch(uint16_t keycode, keyrecord_t *record) {
         if (row == 0 && col == 0) {
             L_Pressed = false;
             // Treat it like a regular keypress if it wasn't held long enough
-            if (L_Pressed_Time + HOLD_TIME > now) {
+            if (L_Pressed_Time + HOLD_TIME > now || L_and_R_were_pressed == false) {
                 bool is_dice = Roll(keycode);
                 if (is_dice == false)
                     tap_code(L_Keycode);
+                if (R_Pressed == false)
+                    L_and_R_were_pressed = false;
                 return false;
             }
         }
         else if (row == 0 && col == 4) {
             R_Pressed = false;
-            if (R_Pressed_Time + HOLD_TIME > now) {
+            if (R_Pressed_Time + HOLD_TIME > now || L_and_R_were_pressed == false) {
                 bool is_dice = Roll(keycode);
                 if (is_dice == false)
                     tap_code(R_Keycode);
+                if (L_Pressed == false)
+                    L_and_R_were_pressed = false;
                 return false;
             }
         }
@@ -211,12 +222,13 @@ bool Roll(uint16_t keycode) {
             Segments__Clear(segments);
             total_rolled = 0;
             break;
-        case DD_ACC:
-            accumulate = !accumulate;
-            if (accumulate)
-                Segments__SetValueWithString(segments, "ACON");
-            else
-                Segments__SetValueWithString(segments, "ACOF");
+        // case DD_ACC:
+        //     was_roll = false;
+        //     accumulate = !accumulate;
+        //     if (accumulate)
+        //         Segments__SetValueWithString(segments, "ACON");
+        //     else
+        //         Segments__SetValueWithString(segments, "ACOF");
         default:
             identified = false;
             was_roll = false;
@@ -314,9 +326,15 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
             case DD_D12:
             case DD_D20:
             case DD_D100:
-            case DD_ACC:
                 Roll(keycode);
                 display_needs_update = false;
+                break;
+            case DD_ACC:
+                accumulate = !accumulate;
+                if (accumulate)
+                    Segments__SetValueWithString(segments, "ACON");
+                else
+                    Segments__SetValueWithString(segments, "ACOF");
                 break;
             case CK_ON:
                 Segments__SetValueWithString(segments, "BEEP");
