@@ -100,10 +100,6 @@ const uint16_t PROGMEM keymaps[NUM_LAYERS][MATRIX_ROWS][MATRIX_COLS] = {
 
 };
 
-void led_set_user(uint8_t usb_led) {
-
-}
-
 bool Roll(uint16_t keycode);
 
 // HandleLayerSwitch
