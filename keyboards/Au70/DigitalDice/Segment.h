@@ -167,7 +167,8 @@ unsigned char Segment__GetValueForChar(char new_value) {
             return (4 + 128 + 8 + 1 + 32);
         case 'i':
         case 'I':
-            return (8 + 128);
+            return (128);
+            // return (8 + 128);
         case 'j':
         case 'J':
             return (64 + 32 + 1);
